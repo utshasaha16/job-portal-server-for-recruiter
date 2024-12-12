@@ -67,7 +67,7 @@ async function run() {
 
             // fokira way to aggregate data
             for (const application of result) {
-                console.log(application.job_id)
+                // console.log(application.job_id)
                 const query1 = { _id: new ObjectId(application.job_id) }
                 const job = await jobsCollection.findOne(query1);
                 if (job) {
@@ -84,6 +84,30 @@ async function run() {
         app.post('/job-applications', async (req, res) => {
             const application = req.body;
             const result = await jobApplicationCollection.insertOne(application);
+
+            // Not the best way (use aggregate) 
+            // skip --> it
+            const id = application.job_id;
+            const query = { _id: new ObjectId(id) }
+            const job = await jobsCollection.findOne(query);
+            let newCount = 0;
+            if (job.applicationCount) {
+                newCount = job.applicationCount + 1;
+            }
+            else {
+                newCount = 1;
+            }
+
+            // now update the job info
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    applicationCount: newCount
+                }
+            }
+
+            const updateResult = await jobsCollection.updateOne(filter, updatedDoc);
+
             res.send(result);
         })
 
