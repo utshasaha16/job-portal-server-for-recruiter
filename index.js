@@ -15,6 +15,12 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log('token inside the verifyToken', token);
+    next();
+}
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.iwlha.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -75,11 +81,22 @@ async function run() {
                 .send({ success: true })
         })
 
+        app.post('/logOut', (req, res) => {
+            res.clearCookie('token', {
+                httpOnly: true,
+                secure: false
+            })
+                .send({ success: true })
+        })
+
         // job application apis
         // get all data, get one data, get some data [o, 1, many]
         app.get('/job-application', async (req, res) => {
             const email = req.query.email;
-            const query = { applicant_email: email }
+            const query = { applicant_email: email };
+
+            console.log(req.cookies);
+
             const result = await jobApplicationCollection.find(query).toArray();
 
             // fokira way to aggregate data
